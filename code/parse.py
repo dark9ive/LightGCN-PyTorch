@@ -43,4 +43,9 @@ def parse_args():
     parser.add_argument('--pretrain', type=int, default=0, help='whether we use pretrained weight or not')
     parser.add_argument('--seed', type=int, default=2020, help='random seed')
     parser.add_argument('--model', type=str, default='lgn', help='rec-model, support [mf, lgn]')
+
+    #   add compatibility to ui graph like movielens dataset
+    parser.add_argument('--delimiter', type=str, default=' ', help='Delimiter in dataset, default value set to space.')
+    parser.add_argument('--max_weight', type=int, default=5, help='Max weight value in ui graph.')
+
     return parser.parse_args()

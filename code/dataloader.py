@@ -405,3 +405,116 @@ class Loader(BasicDataset):
     #     for user in users:
     #         negItems.append(self.allNeg[user])
     #     return negItems
+
+class uigraph_Loader(Loader):
+    def __init__(self,config = world.config,path="../data/ml-1m"):
+        # train or test
+        cprint(f'loading [{path}]')
+        self.split = config['A_split']
+        self.folds = config['A_n_fold']
+        self.mode_dict = {'train': 0, "test": 1}
+        self.mode = self.mode_dict['train']
+        self.n_user = 0     #   user count
+        self.m_item = 0     #   item count
+        train_file = path + '/train.txt'
+        test_file = path + '/test.txt'
+        self.path = path
+        trainUniqueUsers, trainItem, trainUser = [], [], []
+        testUniqueUsers, testItem, testUser = [], [], []
+        self.traindataSize = 0
+        self.testDataSize = 0
+
+        #   add compatibility to ui graph like movielens dataset
+        delimiter = config['delimiter']
+        max_weight = config['max_weight']
+        userIdToIdx = {}
+        itemIdToIdx = {}
+
+        with open(train_file) as f:
+            for l in f.readlines():
+                if len(l) > 0:
+                    l = l.strip('\n').split(delimiter)
+                    userId = int(l[0])
+                    itemId = int(l[1])
+                    
+                    if userId not in userIdToIdx:
+                        userIdToIdx[userId] = self.n_user
+                        self.n_user += 1
+                    uidx = userIdToIdx[userId]
+                    
+                    if itemId not in itemIdToIdx:
+                        itemIdToIdx[itemId] = self.m_item
+                        self.m_item += 1
+                    iidx = itemIdToIdx[itemId]
+
+                    trainUniqueUsers.append(uidx)
+                    trainUser.append(uidx)
+                    trainItem.append(iidx)
+                    self.traindataSize += 1
+        self.trainUniqueUsers = np.array(trainUniqueUsers)
+        self.trainUser = np.array(trainUser)
+        self.trainItem = np.array(trainItem)
+
+        with open(test_file) as f:
+            for l in f.readlines():
+                if len(l) > 0:
+                    l = l.strip('\n').split(delimiter)
+                    userId = int(l[0])
+                    itemId = int(l[1])
+                    
+                    if userId not in userIdToIdx:
+                        userIdToIdx[userId] = self.n_user
+                        self.n_user += 1
+                    uidx = userIdToIdx[userId]
+                    
+                    if itemId not in itemIdToIdx:
+                        itemIdToIdx[itemId] = self.m_item
+                        self.m_item += 1
+                    iidx = itemIdToIdx[itemId]
+
+                    testUniqueUsers.append(uidx)
+                    testUser.append(uidx)
+                    testItem.append(iidx)
+                    self.testDataSize += 1
+        self.testUniqueUsers = np.array(testUniqueUsers)
+        self.testUser = np.array(testUser)
+        self.testItem = np.array(testItem)
+        
+        self.Graph = None
+        print(f"{self.trainDataSize} interactions for training")
+        print(f"{self.testDataSize} interactions for testing")
+        print(f"{world.dataset} Sparsity : {(self.trainDataSize + self.testDataSize) / self.n_users / self.m_items}")
+
+        # (users,items), bipartite graph
+        self.UserItemNet = csr_matrix((np.ones(len(self.trainUser)), (self.trainUser, self.trainItem)),
+                                      shape=(self.n_user, self.m_item))
+        self.users_D = np.array(self.UserItemNet.sum(axis=1)).squeeze()
+        self.users_D[self.users_D == 0.] = 1
+        self.items_D = np.array(self.UserItemNet.sum(axis=0)).squeeze()
+        self.items_D[self.items_D == 0.] = 1.
+        # pre-calculate
+        self._allPos = self.getUserPosItems(list(range(self.n_user)))
+        self.__testDict = super()._Loader__build_test()
+        print(f"{world.dataset} is ready to go")
+        print(self.n_user)
+        print(self.m_item)
+        
+    @property
+    def n_users(self):
+        return self.n_user
+    
+    @property
+    def m_items(self):
+        return self.m_item
+    
+    @property
+    def trainDataSize(self):
+        return self.traindataSize
+    
+    @property
+    def testDict(self):
+        return self.__testDict
+
+    @property
+    def allPos(self):
+        return self._allPos

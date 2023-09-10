@@ -30,7 +30,7 @@ if not os.path.exists(FILE_PATH):
 
 
 config = {}
-all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book']
+all_dataset = ['lastfm', 'gowalla', 'yelp2018', 'amazon-book', 'ml-1m']
 all_models  = ['mf', 'lgn']
 # config['batch_size'] = 4096
 config['bpr_batch_size'] = args.bpr_batch
@@ -46,6 +46,10 @@ config['decay'] = args.decay
 config['pretrain'] = args.pretrain
 config['A_split'] = False
 config['bigdata'] = False
+
+#   add compatibility to ui graph like movielens dataset
+config['delimiter'] = args.delimiter
+config['max_weight'] = args.max_weight
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")

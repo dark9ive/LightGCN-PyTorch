@@ -8,6 +8,8 @@ if world.dataset in ['gowalla', 'yelp2018', 'amazon-book']:
     dataset = dataloader.Loader(path="../data/"+world.dataset)
 elif world.dataset == 'lastfm':
     dataset = dataloader.LastFM()
+elif world.dataset == 'ml-1m':
+    dataset = dataloader.uigraph_Loader(path="../data/"+world.dataset)
 
 print('===========config================')
 pprint(world.config)
